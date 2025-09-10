@@ -12,4 +12,4 @@ seedUsed: number;
 }
 
 
-export type Status = "playing" | "won" | "spilled";
+export type Status = "playing" | "won";

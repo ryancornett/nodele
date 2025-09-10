@@ -38,7 +38,7 @@ export function GhostPreviewOverlay({
         height: cellSize,
         borderRadius: "9999px",
         border: `2px dashed ${
-          valid ? "rgba(255,255,255,0.85)" : "rgba(255,64,64,0.9)"
+          valid ? "rgba(45, 64, 187, 0.5)" : "rgba(255,64,64,0.9)"
         }`,
         background: valid ? "rgba(255,255,255,0.12)" : "rgba(255,64,64,0.12)",
       }}

@@ -22,22 +22,15 @@ export function Board({
   onHover: (i: number | null) => void;
   hoverIdx: number | null;
 }) {
-  const cellSize = 26;
+  const cellSize = 28;
   const gap = 6;
   const canvasSize = level.w * (cellSize + gap) + gap;
 
   return (
     <div
-      className="rounded-2xl p-4"
-      style={{
-        background:
-          status === "spilled"
-            ? "#dc5f5fff"
-            : status === "won"
-            ? "#1e8443ff"
-            : "#e5594fff",
-      }}
-    >
+  className="rounded-2xl p-4"
+  style={{ background: status === "won" ? "#2d40bbd8" : "#e5594fff" }}
+>
       <div
         style={{ width: canvasSize, height: canvasSize, position: "relative" }}
       >

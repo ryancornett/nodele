@@ -3,10 +3,13 @@ import { idx, xy, step, inBounds, manhattan } from "./grid";
 import { mulberry32, randInt } from "./rng";
 import { isSolvableAnyFilled } from "./solver";
 
-// keep your existing "generateLevel" as a draft/shape builder
 export function generateLevel(seed: number, w = 16, h = 16): Level {
   const rng = mulberry32(seed);
-  const target = randInt(rng, 55, 85);  // you can lower to 40–60 for an easier feel
+  const total = w * h;
+// Aim for ~35%–55% of the grid as outlined nodes (tune to taste)
+const min = Math.floor(total * 0.25);
+const max = Math.max(min + 1, Math.floor(total * 0.45));
+const target = randInt(rng, min, max);
 
   const outlines: Cell[] = Array(w * h).fill(0);
   let cx = randInt(rng, Math.floor(w * 0.3), Math.floor(w * 0.7));
@@ -39,7 +42,7 @@ export function generateLevel(seed: number, w = 16, h = 16): Level {
   return { w, h, outlines, starts: [s1, s2], firstDir, seedUsed: seed };
 }
 
-export function generateSolvableLevelSync(seed: number, w = 16, h = 16, maxTries = 200): Level {
+export function generateSolvableLevelSync(seed: number, w = 13, h = 13, maxTries = 200): Level {
   
     for (let off = 0; off < maxTries; off++) {
     const lvl = generateLevel(seed + off, w, h);
