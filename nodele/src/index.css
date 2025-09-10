@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@keyframes shake {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+  75% {
+    transform: translateX(-3px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+.btn-shake {
+  animation: shake 150ms ease-in-out;
+}
+
+/* Subtle grid background */
+.bg-grid {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(0, 0, 0, 0.05) 1px,
+    transparent 1px
+  );
+}
