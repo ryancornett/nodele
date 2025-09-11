@@ -1,5 +1,5 @@
 import type { Level, Dir } from "./types";
-import { idx, xy, step, inBounds } from "./grid";
+import { idx, step, inBounds } from "./grid";
 
 export function isSolvableAnyFilled(level: Level, maxStates = 200_000): boolean {
   const { w, h, outlines, starts, firstDir } = level;

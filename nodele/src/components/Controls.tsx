@@ -1,10 +1,9 @@
 import SlIcon from "@shoelace-style/shoelace/dist/react/icon/index.js";
 
 export function Controls({
-  onNew, onSkip, onToggleDrop, onUndo,
+  onSkip, onToggleDrop, onUndo,
   dropsLeft, skipsLeft, dropActive, undoLeft, canUndo
 }: {
-  onNew: () => void;
   onSkip: () => void;
   onToggleDrop: () => void;
   onUndo: () => void;

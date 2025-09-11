@@ -18,7 +18,7 @@ setBasePath(
 );
 
 export default function App() {
-  const [seed, setSeed] = useState<number>(() => dailySeedNY()); // today’s daily seed
+  const seed = dailySeedNY();
   const [streak, setStreak] = useState(() => loadStreak());
 
   const puzzle = useMemo<Level>(
@@ -56,8 +56,7 @@ export default function App() {
   const { open } = useOverlay();
 
 
-  const THEME_KEY = "ddn_theme"; // "dark" | "light"
-  const STREAK_KEY = "ddn_streak";
+  const THEME_KEY = "ddn_theme";
 
   // Dark mode state
   const [darkMode, setDarkMode] = useState<boolean>(() => {
@@ -291,10 +290,6 @@ useEffect(() => {
     setUndoCredits(RULES.undoWindow);
   }
 
-  function newPuzzle() {
-    setSeed((s) => s + 1);
-  }
-
   const targetMoves = outlinedCount - 2;
 
   useEffect(() => {
@@ -371,10 +366,6 @@ useEffect(() => {
   skipsLeft,
 ]);
 
-
-
-
-
   return (
     <div className="min-h-dvh sm:min-h-[100vh] w-full flex flex-col items-stretch sm:items-center justify-start p-4 gap-4 dark:bg-gray-900">
       <GameHeader
@@ -410,7 +401,6 @@ useEffect(() => {
       />
 
       <Controls
-        onNew={newPuzzle}
         onSkip={handleSkip}
         onToggleDrop={handleToggleDrop}
         onUndo={handleUndo}
