@@ -40,13 +40,12 @@ export function ResultsPanel({
 
   const share = async () => {
     const lines = [
-      `I solved Dot Dot Node #${puzzleNumber}`,
-      `Time: ${formatClock(data.timeMs)}`,
+      `I solved #DotDotNode #${puzzleNumber} in ${formatClock(data.timeMs)}`,
       data.dropsUsed === 0 && data.skipsUsed === 0
         ? "No assists used!"
         : `Drops ${data.dropsUsed}/${data.dropsTotal} · Skips ${data.skipsUsed}/${data.skipsTotal}`,
-      data.streakCurrent != null ? `Streak ${data.streakCurrent}` : undefined,
       `🔴🔵\n🔵🔴`,
+      `dotdotnode.com`,
     ].filter(Boolean) as string[];
 
     try {

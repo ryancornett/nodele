@@ -21,6 +21,7 @@ export default function App() {
   const seed = dailySeedNY();
   const [streak, setStreak] = useState(() => loadStreak());
 
+
   const puzzle = useMemo<Level>(
     () => generateSolvableLevelSync(seed, 12, 12),
     [seed]
@@ -49,6 +50,7 @@ export default function App() {
   const [dropsLeft, setDropsLeft] = useState(RULES.freeDrops);
   const [skipsLeft, setSkipsLeft] = useState(RULES.skips);
   const [mode, setMode] = useState<"play" | "drop">("play"); // toggle to place a free drop
+  const dropMode = mode === "drop";
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [undoCredits, setUndoCredits] = useState(RULES.undoWindow);
   const last = history[history.length - 1];
@@ -329,6 +331,20 @@ useEffect(() => {
   return () => window.removeEventListener("keydown", onKey);
 }, [open, canUndo]);
 
+useEffect(() => {
+  if (mode !== "drop") return;
+  const anyTarget = puzzle.outlines.some((v, i) => v && !fills.includes(i));
+  if (dropsLeft <= 0 || !anyTarget) setMode("play");
+}, [mode, dropsLeft, puzzle, fills]);
+
+useEffect(() => {
+  if (mode !== "drop") return;
+  const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMode("play"); };
+  window.addEventListener("keydown", onKey);
+  return () => window.removeEventListener("keydown", onKey);
+}, [mode]);
+
+
 
 // DEV-only: Alt+R to open Results overlay without changing game state or streak
 useEffect(() => {
@@ -367,7 +383,7 @@ useEffect(() => {
 ]);
 
   return (
-    <div className="min-h-dvh sm:min-h-[100vh] w-full flex flex-col items-stretch sm:items-center justify-start p-4 gap-4 dark:bg-gray-900">
+    <div className={`min-h-dvh sm:min-h-[100vh] w-full flex flex-col items-stretch sm:items-center justify-start p-4 gap-4 dark:bg-gray-900 ${dropMode ? "cursor-copy" : "cursor-pointer"}`}>
       <GameHeader
         moves={moves}
         targetMoves={targetMoves}
@@ -375,7 +391,6 @@ useEffect(() => {
         seedUsed={puzzle.seedUsed}
         dropsLeft={dropsLeft}
         skipsLeft={skipsLeft}
-        undoLeft={RULES.undoWindow - undoCredits}
         streakCurrent={streak.count}
   streakBest={streak.best}
       />
@@ -389,6 +404,8 @@ useEffect(() => {
         onCellClick={handleClick}
         onHover={setHoverIdx}
         hoverIdx={hoverIdx}
+        dropMode={dropMode}
+        canDropAt={(i) => Boolean(puzzle.outlines[i]) && !fills.includes(i)}
       />
 
       <OverlayRoot

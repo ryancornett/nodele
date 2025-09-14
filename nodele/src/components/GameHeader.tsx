@@ -8,7 +8,6 @@ export function GameHeader({
   elapsedMs,
   dropsLeft,
   skipsLeft,
-  undoLeft,
   streakCurrent,
   streakBest,
 }: {
@@ -18,7 +17,6 @@ export function GameHeader({
   seedUsed: number;
   dropsLeft: number;
   skipsLeft: number;
-  undoLeft: number;
   streakCurrent?: number;
   streakBest?: number;
 }) {
@@ -29,6 +27,8 @@ export function GameHeader({
     "text-2xl cursor-pointer hover:text-gray-600 transition-colors duration-200 dark:text-slate-300 dark:hover:text-slate-100";
   const { open } = useOverlay();
   const puzzleNumber = dailyNumberNY();
+  const dropsPermitted = 2;
+  const skipsPermitted = 3;
 
   return (
     <>
@@ -75,13 +75,10 @@ export function GameHeader({
           Moves: <b>{moves}</b> / {targetMoves}
         </div>
         <div className="text-sm">
-          Drops: <b>{dropsLeft}</b>/2
+          Drops: <b>{dropsPermitted - dropsLeft}</b>/2
         </div>
         <div className="text-sm">
-          Skips: <b>{skipsLeft}</b>/3
-        </div>
-        <div className="text-sm">
-          Undos: <b>{undoLeft}</b>/4
+          Skips: <b>{skipsPermitted - skipsLeft}</b>/3
         </div>
       </div>
     </>
