@@ -45,18 +45,18 @@ export function Board({
 
   const isDroppable = (i: number) => canDropAt(i);
 
-  const PAD = {
-    hintRing: Math.round(cellSize * 0.14), // was inset-[14%]
-    validRing: Math.round(cellSize * 0.1), // was inset-[10%]
-    validFill: Math.round(cellSize * 0.22), // was inset-[22%]
-  };
-  const inset = (px: number): React.CSSProperties => ({
-    position: "absolute",
-    top: px,
-    left: px,
-    right: px,
-    bottom: px,
-  });
+  // const PAD = {
+  //   hintRing: Math.round(cellSize * 0.14), // was inset-[14%]
+  //   validRing: Math.round(cellSize * 0.1), // was inset-[10%]
+  //   validFill: Math.round(cellSize * 0.22), // was inset-[22%]
+  // };
+  // const inset = (px: number): React.CSSProperties => ({
+  //   position: "absolute",
+  //   top: px,
+  //   left: px,
+  //   right: px,
+  //   bottom: px,
+  // });
 
   return (
     <div
