@@ -2,6 +2,11 @@ import type { Dir, Level, Status } from "../lib/types";
 import { idx } from "../lib/grid";
 import { CellButton } from "./CellButton";
 import { GhostPreviewOverlay } from "./GhostPreviewOverlay";
+import { cellGeom } from "../lib/cellGeom";
+// Board.tsx (top of component)
+const noopClick = (_i: number) => {};
+const noopHover = (_i: number | null) => {};
+
 
 export function Board({
   level,
@@ -30,8 +35,7 @@ export function Board({
   const cellSize = 28;
   const gap = 6;
   const canvasSize = level.w * (cellSize + gap) + gap;
-  const RING_DIAM = Math.round(cellSize * 0.8); // ~80% of cell
-  const FILL_DIAM = Math.round(cellSize * 0.8);
+  const { RING_DIAM, FILL_DIAM } = cellGeom(cellSize);
 
   const centerBox = (size: number): React.CSSProperties => ({
     position: "absolute",
@@ -44,19 +48,6 @@ export function Board({
   });
 
   const isDroppable = (i: number) => canDropAt(i);
-
-  // const PAD = {
-  //   hintRing: Math.round(cellSize * 0.14), // was inset-[14%]
-  //   validRing: Math.round(cellSize * 0.1), // was inset-[10%]
-  //   validFill: Math.round(cellSize * 0.22), // was inset-[22%]
-  // };
-  // const inset = (px: number): React.CSSProperties => ({
-  //   position: "absolute",
-  //   top: px,
-  //   left: px,
-  //   right: px,
-  //   bottom: px,
-  // });
 
   return (
     <div
@@ -120,19 +111,21 @@ export function Board({
                       : undefined
                   }
                 >
-                  <CellButton
-                    i={i}
-                    outlined={outlined}
-                    filled={filled}
-                    clickable={clickable}
-                    shaking={shaking}
-                    onClick={onCellClick}
-                    onHover={dropMode ? () => {} : onHover}
-                    cellSize={cellSize}
-                    gap={gap}
-                    dir={dir}
-                    showArrow={showArrow}
-                  />
+                  <div style={{ pointerEvents: dropMode ? "none" : "auto" }}>
+      <CellButton
+        i={i}
+        outlined={outlined}
+        filled={filled}
+        clickable={clickable && !dropMode}       // <- no splits while dropping
+        shaking={shaking}
+        onClick={dropMode ? noopClick : onCellClick} // <- route clicks only when not dropping
+        onHover={dropMode ? noopHover : onHover} // <- prevent hover thrash
+        cellSize={cellSize}
+        gap={gap}
+        dir={dir}
+        showArrow={showArrow}
+      />
+    </div>
 
                   {/* 1) Subtle hint ring for all valid drop targets */}
                   {dropMode && droppable && (
@@ -146,13 +139,14 @@ export function Board({
                   {/* 2) Strong hover ghost (valid vs invalid) */}
                   {dropMode && hoverIdx === i && droppable && (
                     <>
-                      {/* ghost fill */}
                       <div
-                        className="pointer-events-none bg-white/60 dark:bg-white/35"
-                        style={centerBox(FILL_DIAM)}
+                        className="pointer-events-none"
+                        style={{
+                          ...centerBox(FILL_DIAM),
+                          background: "rgba(255,255,255,0.6)",
+                        }}
                         aria-hidden
                       />
-                      {/* ghost ring */}
                       <div
                         className="pointer-events-none border-2 border-dashed border-white/80 dark:border-white/70"
                         style={centerBox(RING_DIAM)}

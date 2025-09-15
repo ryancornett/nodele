@@ -1,5 +1,6 @@
 import type { Dir } from "../lib/types";
 import SlIcon from "@shoelace-style/shoelace/dist/react/icon/index.js";
+import { centerBox, cellGeom } from "../lib/cellGeom";
 
 export function CellButton({
   i,
@@ -34,6 +35,7 @@ export function CellButton({
       : d === 2
       ? "arrow-right-circle-fill"
       : "arrow-down-circle-fill";
+  const { RING_DIAM, FILL_DIAM } = cellGeom(cellSize);
   return (
     <button
       onClick={() => onClick(i)}
@@ -52,6 +54,20 @@ export function CellButton({
         cursor: clickable ? "pointer" : "default",
       }}
     >
+      {filled && (
+        <div
+          className="bg-white"
+          style={centerBox(FILL_DIAM)}
+          aria-hidden
+        />
+      )}
+      {outlined && (
+        <div
+          className="border-2 border-transparent"
+          style={centerBox(RING_DIAM)}
+          aria-hidden
+        />
+      )}
       {showArrow && (
         <div
           className="pointer-events-none opacity-85 text-red-500/90 flex justify-center items-center"

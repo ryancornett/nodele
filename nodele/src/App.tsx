@@ -12,6 +12,7 @@ import { dailySeedNY } from "./lib/daily";
 import { recordDailyWin, loadStreak, resetStreak } from "./streak";
 import { ymdNY } from "./timeNY";
 import { OverlayRoot } from "./components/overlay/OverlayRoot";
+import { normalizeLevelCentered } from "./lib/normalize";
 
 setBasePath(
   "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/"
@@ -23,7 +24,7 @@ export default function App() {
 
 
   const puzzle = useMemo<Level>(
-    () => generateSolvableLevelSync(seed, 12, 12),
+    () => normalizeLevelCentered(generateSolvableLevelSync(seed, 12, 12)),
     [seed]
   );
 
