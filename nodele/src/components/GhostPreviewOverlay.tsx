@@ -1,13 +1,9 @@
 import type { Dir, Level } from "../lib/types";
 import { idx, xy, step, inBounds } from "../lib/grid";
+import { centerBox } from "../lib/cellGeom";
 
 export function GhostPreviewOverlay({
-  hoverIdx,
-  dir,
-  level,
-  fills,
-  cellSize,
-  gap,
+  hoverIdx, dir, level, fills, cellSize, gap,
 }: {
   hoverIdx: number | null;
   dir: Dir;
@@ -17,31 +13,40 @@ export function GhostPreviewOverlay({
   gap: number;
 }) {
   if (hoverIdx == null) return null;
-  const [hx, hy] = xy(hoverIdx, level.w);
+
+  const { w, h, outlines } = level;
+  const [x, y] = xy(hoverIdx, w);
   const [dx, dy] = step(dir);
-  const tx = hx + dx,
-    ty = hy + dy;
-  if (!inBounds(tx, ty, level.w, level.h)) return null;
-  const ti = idx(tx, ty, level.w);
-  const valid = level.outlines[ti] === 1 && !fills.includes(ti);
-  const left = tx * (cellSize + gap) + gap;
-  const top = ty * (cellSize + gap) + gap;
+
+  const nx = x + dx;
+  const ny = y + dy;
+  const inb = inBounds(nx, ny, w, h);
+  const ni = inb ? idx(nx, ny, w) : -1;
+
+  const nextValid = inb && outlines[ni] === 1 && !fills.includes(ni);
+
+  // center of a cell in board coordinates:
+  const center = (cx: number, cy: number) => ({
+    top:  gap + cy * (cellSize + gap) + cellSize / 2,
+    left: gap + cx * (cellSize + gap) + cellSize / 2,
+  });
+
+  // Where to show the preview ring: target cell if valid, otherwise the current cell
+  const c = nextValid ? center(nx, ny) : center(x, y);
+
+  const RING = Math.round(cellSize * 0.80);
 
   return (
-    <div
-      className="pointer-events-none"
-      style={{
-        position: "absolute",
-        left,
-        top,
-        width: cellSize,
-        height: cellSize,
-        borderRadius: "9999px",
-        border: `2px dashed ${
-          valid ? "rgba(45, 64, 187, 0.5)" : "rgba(255,64,64,0.9)"
-        }`,
-        background: valid ? "rgba(255,255,255,0.12)" : "rgba(255,64,64,0.12)",
-      }}
-    />
+    <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+      {/* ring */}
+      <div
+        className={nextValid
+          ? "border-2 border-dashed border-blue-900/70"
+          : "border-2 border-dashed border-red-500/80"}
+        style={{ ...centerBox(RING), ...c }}
+        aria-hidden
+      />
+      {/* optional arrow… (use same `c` or compute separately) */}
+    </div>
   );
 }

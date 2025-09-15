@@ -11,7 +11,6 @@ export function CellButton({
   onClick,
   onHover,
   cellSize,
-  gap,
   dir,
   showArrow,
 }: {
@@ -23,7 +22,6 @@ export function CellButton({
   onClick: (i: number) => void;
   onHover: (i: number | null) => void;
   cellSize: number;
-  gap: number;
   dir: Dir;
   showArrow: boolean;
 }) {
@@ -47,7 +45,6 @@ export function CellButton({
       style={{
         width: cellSize,
         height: cellSize,
-        marginLeft: gap,
         borderRadius: "9999px",
         border: outlined ? "2px solid white" : "2px solid transparent",
         background: filled ? "white" : "transparent",

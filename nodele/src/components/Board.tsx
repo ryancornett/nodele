@@ -2,11 +2,11 @@ import type { Dir, Level, Status } from "../lib/types";
 import { idx } from "../lib/grid";
 import { CellButton } from "./CellButton";
 import { GhostPreviewOverlay } from "./GhostPreviewOverlay";
-import { cellGeom } from "../lib/cellGeom";
-// Board.tsx (top of component)
+import { cellGeom, centerBox } from "../lib/cellGeom";
+import { DirectionBadge } from "./DirectionBadge";
+
 const noopClick = (_i: number) => {};
 const noopHover = (_i: number | null) => {};
-
 
 export function Board({
   level,
@@ -18,7 +18,9 @@ export function Board({
   onHover,
   hoverIdx,
   dropMode = false,
-  canDropAt = () => false, // default -> always boolean
+  canDropAt = () => false,
+  cellSize = 28,
+  gap = 6,
 }: {
   level: Level;
   fills: number[];
@@ -30,39 +32,27 @@ export function Board({
   hoverIdx: number | null;
   dropMode?: boolean;
   canDropAt?: (i: number) => boolean;
+  cellSize?: number;
+  gap?: number;
 }) {
   // Keep these consistent with your board sizing
-  const cellSize = 28;
-  const gap = 6;
   const canvasSize = level.w * (cellSize + gap) + gap;
   const { RING_DIAM, FILL_DIAM } = cellGeom(cellSize);
-
-  const centerBox = (size: number): React.CSSProperties => ({
-    position: "absolute",
-    width: size,
-    height: size,
-    top: "50%",
-    left: "72%",
-    transform: "translate(-50%, -50%)",
-    borderRadius: "9999px",
-  });
 
   const isDroppable = (i: number) => canDropAt(i);
 
   return (
-    <div
-      className="rounded-2xl p-4"
-      style={{ background: status === "won" ? "#2d40bbd8" : "#e5594fff" }}
-    >
       <div
         style={{ width: canvasSize, height: canvasSize, position: "relative" }}
       >
+        <DirectionBadge dir={dir} />
         {Array.from({ length: level.h }).map((_, y) => (
           <div
             key={y}
             style={{
               position: "absolute",
               top: y * (cellSize + gap) + gap,
+              left: gap,
               display: "flex",
             }}
           >
@@ -112,20 +102,19 @@ export function Board({
                   }
                 >
                   <div style={{ pointerEvents: dropMode ? "none" : "auto" }}>
-      <CellButton
-        i={i}
-        outlined={outlined}
-        filled={filled}
-        clickable={clickable && !dropMode}       // <- no splits while dropping
-        shaking={shaking}
-        onClick={dropMode ? noopClick : onCellClick} // <- route clicks only when not dropping
-        onHover={dropMode ? noopHover : onHover} // <- prevent hover thrash
-        cellSize={cellSize}
-        gap={gap}
-        dir={dir}
-        showArrow={showArrow}
-      />
-    </div>
+                    <CellButton
+                      i={i}
+                      outlined={outlined}
+                      filled={filled}
+                      clickable={clickable && !dropMode} // <- no splits while dropping
+                      shaking={shaking}
+                      onClick={dropMode ? noopClick : onCellClick} // <- route clicks only when not dropping
+                      onHover={dropMode ? noopHover : onHover} // <- prevent hover thrash
+                      cellSize={cellSize}
+                      dir={dir}
+                      showArrow={showArrow}
+                    />
+                  </div>
 
                   {/* 1) Subtle hint ring for all valid drop targets */}
                   {dropMode && droppable && (
@@ -179,6 +168,5 @@ export function Board({
           />
         )}
       </div>
-    </div>
   );
 }

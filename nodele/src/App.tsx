@@ -13,6 +13,7 @@ import { recordDailyWin, loadStreak, resetStreak } from "./streak";
 import { ymdNY } from "./timeNY";
 import { OverlayRoot } from "./components/overlay/OverlayRoot";
 import { normalizeLevelCentered } from "./lib/normalize";
+import { useAutosizeCell } from "./hooks/useAutosizeCell";
 
 setBasePath(
   "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/"
@@ -22,11 +23,17 @@ export default function App() {
   const seed = dailySeedNY();
   const [streak, setStreak] = useState(() => loadStreak());
 
-
   const puzzle = useMemo<Level>(
     () => normalizeLevelCentered(generateSolvableLevelSync(seed, 12, 12)),
     [seed]
   );
+  const GAP = 6;
+
+  const { containerRef: boardRef, cell } = useAutosizeCell(puzzle.w, GAP, {
+    min: 18, // floor on tiny phones
+    max: 30, // ceiling on desktop
+    safetyPx: 1,
+  });
 
   const [fills, setFills] = useState<number[]>([]);
   const [turn, setTurn] = useState(0);
@@ -57,7 +64,6 @@ export default function App() {
   const last = history[history.length - 1];
   const canUndo = !!last && (last.type !== "split" || undoCredits > 0);
   const { open } = useOverlay();
-
 
   const THEME_KEY = "ddn_theme";
 
@@ -105,51 +111,42 @@ export default function App() {
   const dir: Dir = ((puzzle.firstDir + turn) & 3) as Dir;
 
   function hasSplitMove(level: Level, fills: number[], dir: Dir): boolean {
-  for (const i of fills) {
-    const [x, y] = xy(i, level.w);
-    const [dx, dy] = step(dir);
-    const nx = x + dx, ny = y + dy;
-    if (!inBounds(nx, ny, level.w, level.h)) continue;
-    const ni = idx(nx, ny, level.w);
-    if (level.outlines[ni] && !fills.includes(ni)) return true;
+    for (const i of fills) {
+      const [x, y] = xy(i, level.w);
+      const [dx, dy] = step(dir);
+      const nx = x + dx,
+        ny = y + dy;
+      if (!inBounds(nx, ny, level.w, level.h)) continue;
+      const ni = idx(nx, ny, level.w);
+      if (level.outlines[ni] && !fills.includes(ni)) return true;
+    }
+    return false;
   }
-  return false;
-}
 
-const deadOnceRef = useRef(false);
+  const deadOnceRef = useRef(false);
 
-useEffect(() => {
-  if (status !== "playing") return;
+  useEffect(() => {
+    if (status !== "playing") return;
 
-  const splitOk = hasSplitMove(puzzle, fills, dir);
-  // A drop is legal if you have any drops left and puzzle isn’t already solved
-  const dropOk = dropsLeft > 0 && fills.length < outlinedCount;
-  const skipOk = skipsLeft > 0;
+    const splitOk = hasSplitMove(puzzle, fills, dir);
+    // A drop is legal if you have any drops left and puzzle isn’t already solved
+    const dropOk = dropsLeft > 0 && fills.length < outlinedCount;
+    const skipOk = skipsLeft > 0;
 
-  const canMove = splitOk || dropOk || skipOk;
+    const canMove = splitOk || dropOk || skipOk;
 
-  if (!canMove && !deadOnceRef.current) {
-    open("nomoremoves", {
-      canUndo,
-      onUndo: handleUndo,
-      onReset: onResetPuzzle,
-    });
-    deadOnceRef.current = true;
-  } else if (canMove) {
-    // Re-arm once player regains any legal move
-    deadOnceRef.current = false;
-  }
-}, [
-  status,
-  fills,
-  dir,
-  dropsLeft,
-  skipsLeft,
-  outlinedCount,
-  canUndo,
-  open,
-]);
-
+    if (!canMove && !deadOnceRef.current) {
+      open("nomoremoves", {
+        canUndo,
+        onUndo: handleUndo,
+        onReset: onResetPuzzle,
+      });
+      deadOnceRef.current = true;
+    } else if (canMove) {
+      // Re-arm once player regains any legal move
+      deadOnceRef.current = false;
+    }
+  }, [status, fills, dir, dropsLeft, skipsLeft, outlinedCount, canUndo, open]);
 
   function handleClick(i: number) {
     if (status !== "playing") return;
@@ -267,11 +264,10 @@ useEffect(() => {
     }
   }
 
- function onResetStreak() {
-  resetStreak();
-  setStreak(loadStreak());
-}
-
+  function onResetStreak() {
+    resetStreak();
+    setStreak(loadStreak());
+  }
 
   function onResetPuzzle() {
     resetSame(); // your existing reset that reinitializes fills/turn/moves
@@ -298,69 +294,13 @@ useEffect(() => {
   useEffect(() => {
     if (status === "won") {
       const s = recordDailyWin(ymdNY());
-    setStreak(s);
+      setStreak(s);
       const dropsUsed = RULES.freeDrops - dropsLeft;
       const skipsUsed = RULES.skips - skipsLeft;
       open("results", {
         seed: puzzle.seedUsed,
-      timeMs: elapsed,
-      moves,
-      targetMoves,
-      dropsUsed,
-      dropsTotal: RULES.freeDrops,
-      skipsUsed,
-      skipsTotal: RULES.skips,
-      streakCurrent: s.count,
-      streakBest: s.best,
-      });
-    }
-  }, [status]);
-
-
-useEffect(() => {
-  if (!import.meta.env.DEV) return;
-  function onKey(e: KeyboardEvent) {
-    if (e.altKey && e.code === "KeyN") {
-      open("nomoremoves", {
-        canUndo,
-        onUndo: handleUndo,
-        onReset: onResetPuzzle,
-      });
-    }
-  }
-  window.addEventListener("keydown", onKey);
-  return () => window.removeEventListener("keydown", onKey);
-}, [open, canUndo]);
-
-useEffect(() => {
-  if (mode !== "drop") return;
-  const anyTarget = puzzle.outlines.some((v, i) => v && !fills.includes(i));
-  if (dropsLeft <= 0 || !anyTarget) setMode("play");
-}, [mode, dropsLeft, puzzle, fills]);
-
-useEffect(() => {
-  if (mode !== "drop") return;
-  const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMode("play"); };
-  window.addEventListener("keydown", onKey);
-  return () => window.removeEventListener("keydown", onKey);
-}, [mode]);
-
-
-
-// DEV-only: Alt+R to open Results overlay without changing game state or streak
-useEffect(() => {
-  if (!import.meta.env.DEV) return;
-
-  function onKey(e: KeyboardEvent) {
-    if (e.altKey && e.code === "KeyR") {
-      const dropsUsed = RULES.freeDrops - dropsLeft;
-      const skipsUsed = RULES.skips - skipsLeft;
-      const s = loadStreak(); // just to display in panel
-
-      open("results", {
-        seed: puzzle.seedUsed,
-        timeMs: elapsed || 12_345,
-        moves: moves || 12,
+        timeMs: elapsed,
+        moves,
         targetMoves,
         dropsUsed,
         dropsTotal: RULES.freeDrops,
@@ -370,21 +310,80 @@ useEffect(() => {
         streakBest: s.best,
       });
     }
-  }
-  window.addEventListener("keydown", onKey);
-  return () => window.removeEventListener("keydown", onKey);
-}, [
-  open,
-  puzzle.seedUsed,
-  elapsed,
-  moves,
-  targetMoves,
-  dropsLeft,
-  skipsLeft,
-]);
+  }, [status]);
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.altKey && e.code === "KeyN") {
+        open("nomoremoves", {
+          canUndo,
+          onUndo: handleUndo,
+          onReset: onResetPuzzle,
+        });
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, canUndo]);
+
+  useEffect(() => {
+    if (mode !== "drop") return;
+    const anyTarget = puzzle.outlines.some((v, i) => v && !fills.includes(i));
+    if (dropsLeft <= 0 || !anyTarget) setMode("play");
+  }, [mode, dropsLeft, puzzle, fills]);
+
+  useEffect(() => {
+    if (mode !== "drop") return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMode("play");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mode]);
+
+  // DEV-only: Alt+R to open Results overlay without changing game state or streak
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+
+    function onKey(e: KeyboardEvent) {
+      if (e.altKey && e.code === "KeyR") {
+        const dropsUsed = RULES.freeDrops - dropsLeft;
+        const skipsUsed = RULES.skips - skipsLeft;
+        const s = loadStreak(); // just to display in panel
+
+        open("results", {
+          seed: puzzle.seedUsed,
+          timeMs: elapsed || 12_345,
+          moves: moves || 12,
+          targetMoves,
+          dropsUsed,
+          dropsTotal: RULES.freeDrops,
+          skipsUsed,
+          skipsTotal: RULES.skips,
+          streakCurrent: s.count,
+          streakBest: s.best,
+        });
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [
+    open,
+    puzzle.seedUsed,
+    elapsed,
+    moves,
+    targetMoves,
+    dropsLeft,
+    skipsLeft,
+  ]);
 
   return (
-    <div className={`min-h-dvh sm:min-h-[100vh] w-full flex flex-col items-stretch sm:items-center justify-start p-4 gap-4 dark:bg-gray-900 ${dropMode ? "cursor-copy" : "cursor-pointer"}`}>
+    <div
+      className={`min-h-dvh sm:min-h-[100vh] w-full flex flex-col items-stretch sm:items-center justify-start p-4 gap-4 dark:bg-gray-900 ${
+        dropMode ? "cursor-copy" : "cursor-pointer"
+      }`}
+    >
       <GameHeader
         moves={moves}
         targetMoves={targetMoves}
@@ -393,21 +392,34 @@ useEffect(() => {
         dropsLeft={dropsLeft}
         skipsLeft={skipsLeft}
         streakCurrent={streak.count}
-  streakBest={streak.best}
+        streakBest={streak.best}
       />
 
-      <Board
-        level={puzzle} // prop name stays 'level' for children; local var is 'puzzle'
-        fills={fills}
-        status={status}
-        dir={dir}
-        shakeIdx={shakeIdx}
-        onCellClick={handleClick}
-        onHover={setHoverIdx}
-        hoverIdx={hoverIdx}
-        dropMode={dropMode}
-        canDropAt={(i) => Boolean(puzzle.outlines[i]) && !fills.includes(i)}
-      />
+      <div className="w-full sm:max-w-[min(80vw,520px)] mx-auto">
+        <div
+          className="rounded-2xl p-4"
+          style={{ background: status === "won" ? "#2d40bbd8" : "#e5594fff" }}
+        >
+          <div ref={boardRef}>
+            <Board
+              level={puzzle} // prop name stays 'level' for children; local var is 'puzzle'
+              fills={fills}
+              status={status}
+              dir={dir}
+              shakeIdx={shakeIdx}
+              onCellClick={handleClick}
+              onHover={setHoverIdx}
+              hoverIdx={hoverIdx}
+              dropMode={dropMode}
+              canDropAt={(i) =>
+                Boolean(puzzle.outlines[i]) && !fills.includes(i)
+              }
+              cellSize={cell}
+              gap={GAP}
+            />
+          </div>
+        </div>
+      </div>
 
       <OverlayRoot
         settings={{
